@@ -709,10 +709,12 @@ static void do_execute(struct tsm_vte *vte, uint32_t ctrl)
 	case 0x08: /* BS */
 		/* Move cursor one position left */
 		tsm_screen_move_left(vte->con, 1);
+        event_dispatch(vte, TSM_EV_MOVE_LEFT, 0, 0, 1,NULL);
 		break;
 	case 0x09: /* HT */
 		/* Move to next tab stop or end of line */
 		tsm_screen_tab_right(vte->con, 1);
+        event_dispatch(vte, TSM_EV_MOVE_RIGHT, 0, 0, 1,NULL);
 		break;
 	case 0x0a: /* LF */
 	case 0x0b: /* VT */
@@ -722,10 +724,12 @@ static void do_execute(struct tsm_vte *vte, uint32_t ctrl)
 			tsm_screen_newline(vte->con);
 		else
 			tsm_screen_move_down(vte->con, 1, true);
+        event_dispatch(vte, TSM_EV_LINEFEED, 0, 0, 0,NULL);
 		break;
 	case 0x0d: /* CR */
 		/* Move cursor to left margin */
 		tsm_screen_move_line_home(vte->con);
+        event_dispatch(vte, TSM_EV_CARRIAGE_RET, 0, 0, 0,NULL);
 		break;
 	case 0x0e: /* SO */
 		/* Map G1 character set into GL */
@@ -1602,7 +1606,7 @@ static void do_csi(struct tsm_vte *vte, uint32_t data)
 			num = 1;
 		x = tsm_screen_get_cursor_x(vte->con);
 		tsm_screen_move_to(vte->con, x, num - 1);
-        event_dispatch(vte, TSM_EV_MOVE_TO_ABS, 0, num-1, 0,NULL);  //vertical movement: I send just the y needed value
+        event_dispatch(vte, TSM_EV_MOVE_TO_VABS, 0, num-1, 0,NULL);
 		break;
 	case 'e': /* VPR */
 		/* Vertical Line Position Relative */
@@ -1612,7 +1616,7 @@ static void do_csi(struct tsm_vte *vte, uint32_t data)
 		x = tsm_screen_get_cursor_x(vte->con);
 		y = tsm_screen_get_cursor_y(vte->con);
 		tsm_screen_move_to(vte->con, x, y + num);
-        event_dispatch(vte, TSM_EV_MOVE_TO_REL, 0, num, 0,NULL);  //vertical movement: I send just the y needed value
+        event_dispatch(vte, TSM_EV_MOVE_TO_VREL, 0, num, 0,NULL);
 		break;
 	case 'H': /* CUP */
 	case 'f': /* HVP */
@@ -1624,6 +1628,7 @@ static void do_csi(struct tsm_vte *vte, uint32_t data)
 		if (y <= 0)
 			y = 1;
 		tsm_screen_move_to(vte->con, y - 1, x - 1);
+        event_dispatch(vte, TSM_EV_MOVE_TO, 0, num, 0,NULL);
 		break;
 	case 'G': /* CHA */
 		/* Cursor Character Absolute */
@@ -1632,6 +1637,7 @@ static void do_csi(struct tsm_vte *vte, uint32_t data)
 			num = 1;
 		y = tsm_screen_get_cursor_y(vte->con);
 		tsm_screen_move_to(vte->con, num - 1, y);
+        event_dispatch(vte, TSM_EV_MOVE_TO_HABS, num - 1, 0, 0,NULL);
 		break;
 	case 'J':
 		if (vte->csi_flags & CSI_WHAT)
@@ -1650,6 +1656,8 @@ static void do_csi(struct tsm_vte *vte, uint32_t data)
 		else
 			llog_debug(vte, "unknown parameter to CSI-J: %d",
 				   vte->csi_argv[0]);
+
+        event_dispatch(vte, TSM_EV_ERASE_IN_DISPLAY, 0, 0, vte->csi_argv[0],NULL);
 		break;
 	case 'K':
 		if (vte->csi_flags & CSI_WHAT)
@@ -1666,6 +1674,8 @@ static void do_csi(struct tsm_vte *vte, uint32_t data)
 		else
 			llog_debug(vte, "unknown parameter to CSI-K: %d",
 				   vte->csi_argv[0]);
+
+        event_dispatch(vte, TSM_EV_ERASE_IN_LINE, 0, 0, vte->csi_argv[0],NULL);
 		break;
 	case 'X': /* ECH */
 		/* erase characters */

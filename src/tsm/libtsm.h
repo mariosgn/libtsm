@@ -325,8 +325,14 @@ typedef enum tsm_vte_event_id {
     TSM_EV_MOVE_DOWN,
     TSM_EV_MOVE_RIGHT,
     TSM_EV_MOVE_LEFT,
-    TSM_EV_MOVE_TO_ABS,
-    TSM_EV_MOVE_TO_REL,
+    TSM_EV_MOVE_TO_VABS,
+    TSM_EV_MOVE_TO_HABS,
+    TSM_EV_MOVE_TO_VREL,
+    TSM_EV_MOVE_TO,
+    TSM_EV_ERASE_IN_DISPLAY,
+    TSM_EV_ERASE_IN_LINE,
+    TSM_EV_LINEFEED,
+    TSM_EV_CARRIAGE_RET,
 } tsm_vte_event_id;
 
 typedef struct tsm_vte_event {
