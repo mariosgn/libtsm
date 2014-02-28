@@ -371,6 +371,7 @@ int tsm_vte_new(struct tsm_vte **out, struct tsm_screen *con,
 	int ret;
 
 	if (!out || !con || !write_cb)
+    if (!out || !con /*|| !write_cb*/) //write_cb is not used or needed except for debug
 		return -EINVAL;
 
 	vte = malloc(sizeof(*vte));
