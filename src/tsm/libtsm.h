@@ -320,7 +320,13 @@ bool tsm_vte_handle_keyboard(struct tsm_vte *vte, uint32_t keysym,
 
 
 typedef enum tsm_vte_event_id {
-    TSM_EV_PRINT
+    TSM_EV_PRINT,
+    TSM_EV_MOVE_UP,
+    TSM_EV_MOVE_DOWN,
+    TSM_EV_MOVE_RIGHT,
+    TSM_EV_MOVE_LEFT,
+    TSM_EV_MOVE_TO_ABS,
+    TSM_EV_MOVE_TO_REL,
 } tsm_vte_event_id;
 
 typedef struct tsm_vte_event {

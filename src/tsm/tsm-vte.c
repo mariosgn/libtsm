@@ -1569,6 +1569,7 @@ static void do_csi(struct tsm_vte *vte, uint32_t data)
 		if (num <= 0)
 			num = 1;
 		tsm_screen_move_up(vte->con, num, false);
+        event_dispatch(vte, TSM_EV_MOVE_UP, 0,0, num, NULL);
 		break;
 	case 'B': /* CUD */
 		/* move cursor down */
@@ -1576,6 +1577,7 @@ static void do_csi(struct tsm_vte *vte, uint32_t data)
 		if (num <= 0)
 			num = 1;
 		tsm_screen_move_down(vte->con, num, false);
+        event_dispatch(vte, TSM_EV_MOVE_DOWN, 0,0, num, NULL);
 		break;
 	case 'C': /* CUF */
 		/* move cursor forward */
@@ -1583,6 +1585,7 @@ static void do_csi(struct tsm_vte *vte, uint32_t data)
 		if (num <= 0)
 			num = 1;
 		tsm_screen_move_right(vte->con, num);
+        event_dispatch(vte, TSM_EV_MOVE_RIGHT, 0,0, num, NULL);
 		break;
 	case 'D': /* CUB */
 		/* move cursor backward */
@@ -1590,6 +1593,7 @@ static void do_csi(struct tsm_vte *vte, uint32_t data)
 		if (num <= 0)
 			num = 1;
 		tsm_screen_move_left(vte->con, num);
+        event_dispatch(vte, TSM_EV_MOVE_LEFT, 0,0, num, NULL);
 		break;
 	case 'd': /* VPA */
 		/* Vertical Line Position Absolute */
@@ -1598,6 +1602,7 @@ static void do_csi(struct tsm_vte *vte, uint32_t data)
 			num = 1;
 		x = tsm_screen_get_cursor_x(vte->con);
 		tsm_screen_move_to(vte->con, x, num - 1);
+        event_dispatch(vte, TSM_EV_MOVE_TO_ABS, 0, num-1, 0,NULL);  //vertical movement: I send just the y needed value
 		break;
 	case 'e': /* VPR */
 		/* Vertical Line Position Relative */
@@ -1607,6 +1612,7 @@ static void do_csi(struct tsm_vte *vte, uint32_t data)
 		x = tsm_screen_get_cursor_x(vte->con);
 		y = tsm_screen_get_cursor_y(vte->con);
 		tsm_screen_move_to(vte->con, x, y + num);
+        event_dispatch(vte, TSM_EV_MOVE_TO_REL, 0, num, 0,NULL);  //vertical movement: I send just the y needed value
 		break;
 	case 'H': /* CUP */
 	case 'f': /* HVP */
