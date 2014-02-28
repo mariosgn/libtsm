@@ -152,6 +152,11 @@ typedef uint_fast32_t tsm_age_t;
 #define TSM_SCREEN_FIXED_POS	0x20
 #define TSM_SCREEN_ALTERNATE	0x40
 
+enum {
+    asd = 1
+};
+
+
 struct tsm_screen_attr {
 	int8_t fccode;			/* foreground color code or <0 for rgb */
 	int8_t bccode;			/* background color code or <0 for rgb */
@@ -312,6 +317,26 @@ void tsm_vte_input(struct tsm_vte *vte, const char *u8, size_t len);
 bool tsm_vte_handle_keyboard(struct tsm_vte *vte, uint32_t keysym,
 			     uint32_t ascii, unsigned int mods,
 			     uint32_t unicode);
+
+
+typedef enum tsm_vte_event_id {
+    TSM_EV_PRINT
+} tsm_vte_event_id;
+
+typedef struct tsm_vte_event {
+    tsm_vte_event_id id;
+    int x;
+    int y;
+    int num;
+    tsm_symbol_t sym;
+//    tsm_screen_attr *attr;
+} tsm_vte_event;
+
+typedef void (*tsm_vte_event_cb) (struct tsm_vte *vte,
+                   tsm_vte_event event,
+                   void* data);
+
+void tsm_vte_set_event_cb(struct tsm_vte *vte, tsm_vte_event_cb ev, void *data);
 
 /** @} */
 

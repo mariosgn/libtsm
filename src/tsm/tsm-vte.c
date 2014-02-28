@@ -152,8 +152,10 @@ struct tsm_vte {
 	tsm_log_t llog;
 	void *llog_data;
 	struct tsm_screen *con;
-	tsm_vte_write_cb write_cb;
-	void *data;
+    tsm_vte_write_cb write_cb;
+    void *data;
+    tsm_vte_event_cb event_cb;
+    void *event_cb_data;
 	char *palette_name;
 
 	struct tsm_utf8_mach *mach;
@@ -370,7 +372,6 @@ int tsm_vte_new(struct tsm_vte **out, struct tsm_screen *con,
 	struct tsm_vte *vte;
 	int ret;
 
-	if (!out || !con || !write_cb)
     if (!out || !con /*|| !write_cb*/) //write_cb is not used or needed except for debug
 		return -EINVAL;
 
@@ -410,10 +411,40 @@ err_free:
 SHL_EXPORT
 void tsm_vte_ref(struct tsm_vte *vte)
 {
-	if (!vte)
-		return;
+    if (!vte)
+        return;
 
-	vte->ref++;
+    vte->ref++;
+}
+
+
+SHL_EXPORT
+void tsm_vte_set_event_cb(struct tsm_vte *vte, tsm_vte_event_cb ev, void *data)
+{
+    if (!vte)
+        return;
+
+    vte->event_cb = ev;
+    vte->event_cb_data = data;
+}
+
+static void event_dispatch(struct tsm_vte *vte,
+                           tsm_vte_event_id id,
+                           int x, int y,
+                           int num,
+                           tsm_symbol_t sym )
+{
+    if (!vte->event_cb) {
+        return;
+    } else { //do not remove the brackets.
+        tsm_vte_event e;
+        e.id = id;
+        e.x = x;
+        e.y = y;
+        e.num = num;
+        e.sym = sym;
+        vte->event_cb(vte, e, vte->event_cb_data);
+    }
 }
 
 SHL_EXPORT
@@ -543,6 +574,7 @@ static void write_console(struct tsm_vte *vte, tsm_symbol_t sym)
 {
 	to_rgb(vte, &vte->cattr);
 	tsm_screen_write(vte->con, sym, &vte->cattr);
+    event_dispatch(vte, TSM_EV_PRINT, 0,0,0, sym);
 }
 
 static void reset_state(struct tsm_vte *vte)
