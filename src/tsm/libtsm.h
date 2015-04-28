@@ -321,18 +321,17 @@ bool tsm_vte_handle_keyboard(struct tsm_vte *vte, uint32_t keysym,
 
 typedef enum tsm_vte_event_id {
     TSM_EV_PRINT,
-    TSM_EV_MOVE_UP,
-    TSM_EV_MOVE_DOWN,
-    TSM_EV_MOVE_RIGHT,
-    TSM_EV_MOVE_LEFT,
-    TSM_EV_MOVE_TO_VABS,
-    TSM_EV_MOVE_TO_HABS,
-    TSM_EV_MOVE_TO_VREL,
+    TSM_EV_MOVE_OF,
     TSM_EV_MOVE_TO,
     TSM_EV_ERASE_IN_DISPLAY,
     TSM_EV_ERASE_IN_LINE,
+    TSM_EV_ERASE_CHARS_IN_LINE,
     TSM_EV_LINEFEED,
     TSM_EV_CARRIAGE_RET,
+    TSM_EV_INSERT_LINES,
+    TSM_EV_DELETE_LINES,
+    TSM_EV_INSERT_CHARS,
+    TSM_EV_DELETE_CHARS,
 } tsm_vte_event_id;
 
 typedef struct tsm_vte_event {

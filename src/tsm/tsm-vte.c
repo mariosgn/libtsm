@@ -428,6 +428,11 @@ void tsm_vte_set_event_cb(struct tsm_vte *vte, tsm_vte_event_cb ev, void *data)
     vte->event_cb_data = data;
 }
 
+static void event_untrapped( char* ev)
+{
+    fprintf(stderr, "Untrapped event [%s]\n", ev);
+}
+
 static void event_dispatch(struct tsm_vte *vte,
                            tsm_vte_event_id id,
                            int x, int y,
@@ -711,12 +716,11 @@ static void do_execute(struct tsm_vte *vte, uint32_t ctrl)
 	case 0x08: /* BS */
 		/* Move cursor one position left */
 		tsm_screen_move_left(vte->con, 1);
-        event_dispatch(vte, TSM_EV_MOVE_LEFT, 0, 0, 1,NULL);
+        event_dispatch(vte, TSM_EV_MOVE_OF, -1, 0, 1,NULL);
 		break;
 	case 0x09: /* HT */
 		/* Move to next tab stop or end of line */
-		tsm_screen_tab_right(vte->con, 1);
-        event_dispatch(vte, TSM_EV_MOVE_RIGHT, 0, 0, 1,NULL);
+        tsm_screen_tab_right(vte->con, 1);
 		break;
 	case 0x0a: /* LF */
 	case 0x0b: /* VT */
@@ -730,7 +734,7 @@ static void do_execute(struct tsm_vte *vte, uint32_t ctrl)
 		else
         {
 			tsm_screen_move_down(vte->con, 1, true);
-            event_dispatch(vte, TSM_EV_MOVE_TO_VABS, 0, 1, 0,NULL);
+            event_dispatch(vte, TSM_EV_MOVE_OF, 0, 1, 0,NULL);
         }
 
 		break;
@@ -773,7 +777,7 @@ static void do_execute(struct tsm_vte *vte, uint32_t ctrl)
 	case 0x84: /* IND */
 		/* Move down one row, perform scroll-up if needed */
 		tsm_screen_move_down(vte->con, 1, true);
-        event_dispatch(vte, TSM_EV_MOVE_TO_VABS, 0, 1, 0,NULL);
+        event_dispatch(vte, TSM_EV_MOVE_OF, 0, 1, 0,NULL);
 		break;
 	case 0x85: /* NEL */
 		/* CR/NL with scroll-up if needed */
@@ -787,7 +791,7 @@ static void do_execute(struct tsm_vte *vte, uint32_t ctrl)
 	case 0x8d: /* RI */
 		/* Move up one row, perform scroll-down if needed */
 		tsm_screen_move_up(vte->con, 1, true);
-        event_dispatch(vte, TSM_EV_MOVE_TO_VABS, 0, -1, 0,NULL);
+        event_dispatch(vte, TSM_EV_MOVE_OF, 0, -1, 0,NULL);
 		break;
 	case 0x8e: /* SS2 */
 		/* Temporarily map G2 into GL for next char only */
@@ -1005,7 +1009,7 @@ static void do_esc(struct tsm_vte *vte, uint32_t data)
 	case 'D': /* IND */
 		/* Move down one row, perform scroll-up if needed */
 		tsm_screen_move_down(vte->con, 1, true);
-        event_dispatch(vte, TSM_EV_MOVE_TO_VREL, 0, 1, 0,NULL);
+        event_dispatch(vte, TSM_EV_MOVE_OF, 0, 1, 0,NULL);
 		break;
 	case 'E': /* NEL */
 		/* CR/NL with scroll-up if needed */
@@ -1015,11 +1019,12 @@ static void do_esc(struct tsm_vte *vte, uint32_t data)
 	case 'H': /* HTS */
 		/* Set tab stop at current position */
 		tsm_screen_set_tabstop(vte->con);
+        event_untrapped('H');
 		break;
 	case 'M': /* RI */
 		/* Move up one row, perform scroll-down if needed */
 		tsm_screen_move_up(vte->con, 1, true);
-        event_dispatch(vte, TSM_EV_MOVE_TO_VREL, 0, -1, 0,NULL);
+        event_dispatch(vte, TSM_EV_MOVE_OF, 0, -1, 0,NULL);
 		break;
 	case 'N': /* SS2 */
 		/* Temporarily map G2 into GL for next char only */
@@ -1591,7 +1596,7 @@ static void do_csi(struct tsm_vte *vte, uint32_t data)
 		if (num <= 0)
 			num = 1;
 		tsm_screen_move_up(vte->con, num, false);
-        event_dispatch(vte, TSM_EV_MOVE_UP, 0,0, num, NULL);
+        event_dispatch(vte, TSM_EV_MOVE_OF, 0, -1, num, NULL);
 		break;
 	case 'B': /* CUD */
 		/* move cursor down */
@@ -1599,7 +1604,7 @@ static void do_csi(struct tsm_vte *vte, uint32_t data)
 		if (num <= 0)
 			num = 1;
 		tsm_screen_move_down(vte->con, num, false);
-        event_dispatch(vte, TSM_EV_MOVE_DOWN, 0,0, num, NULL);
+        event_dispatch(vte, TSM_EV_MOVE_OF, 0, 1, num, NULL);
 		break;
 	case 'C': /* CUF */
 		/* move cursor forward */
@@ -1607,7 +1612,7 @@ static void do_csi(struct tsm_vte *vte, uint32_t data)
 		if (num <= 0)
 			num = 1;
 		tsm_screen_move_right(vte->con, num);
-        event_dispatch(vte, TSM_EV_MOVE_RIGHT, 0,0, num, NULL);
+        event_dispatch(vte, TSM_EV_MOVE_OF, 1, 0, num, NULL);
 		break;
 	case 'D': /* CUB */
 		/* move cursor backward */
@@ -1615,7 +1620,7 @@ static void do_csi(struct tsm_vte *vte, uint32_t data)
 		if (num <= 0)
 			num = 1;
 		tsm_screen_move_left(vte->con, num);
-        event_dispatch(vte, TSM_EV_MOVE_LEFT, 0,0, num, NULL);
+        event_dispatch(vte, TSM_EV_MOVE_OF, -1, 0, num, NULL);
 		break;
 	case 'd': /* VPA */
 		/* Vertical Line Position Absolute */
@@ -1624,7 +1629,7 @@ static void do_csi(struct tsm_vte *vte, uint32_t data)
 			num = 1;
 		x = tsm_screen_get_cursor_x(vte->con);
 		tsm_screen_move_to(vte->con, x, num - 1);
-        event_dispatch(vte, TSM_EV_MOVE_TO_VABS, 0, num, 0,NULL);
+        event_dispatch(vte, TSM_EV_MOVE_TO, x, num-1, num,NULL);
 		break;
 	case 'e': /* VPR */
 		/* Vertical Line Position Relative */
@@ -1634,7 +1639,7 @@ static void do_csi(struct tsm_vte *vte, uint32_t data)
 		x = tsm_screen_get_cursor_x(vte->con);
 		y = tsm_screen_get_cursor_y(vte->con);
 		tsm_screen_move_to(vte->con, x, y + num);
-        event_dispatch(vte, TSM_EV_MOVE_TO_VREL, 0, num, 0,NULL);
+        event_dispatch(vte, TSM_EV_MOVE_OF, 0, num, num,NULL);
 		break;
 	case 'H': /* CUP */
 	case 'f': /* HVP */
@@ -1646,7 +1651,7 @@ static void do_csi(struct tsm_vte *vte, uint32_t data)
 		if (y <= 0)
 			y = 1;
 		tsm_screen_move_to(vte->con, y - 1, x - 1);
-        event_dispatch(vte, TSM_EV_MOVE_TO, y,x, 0,NULL);
+        event_dispatch(vte, TSM_EV_MOVE_TO, y, x, num,NULL);
 		break;
 	case 'G': /* CHA */
 		/* Cursor Character Absolute */
@@ -1655,7 +1660,7 @@ static void do_csi(struct tsm_vte *vte, uint32_t data)
 			num = 1;
 		y = tsm_screen_get_cursor_y(vte->con);
 		tsm_screen_move_to(vte->con, num - 1, y);
-        event_dispatch(vte, TSM_EV_MOVE_TO_HABS, num, 0, 0,NULL);
+        event_dispatch(vte, TSM_EV_MOVE_TO, num - 1, y, num,NULL);
 		break;
 	case 'J':
 		if (vte->csi_flags & CSI_WHAT)
@@ -1700,8 +1705,7 @@ static void do_csi(struct tsm_vte *vte, uint32_t data)
 		num = vte->csi_argv[0];
 		if (num <= 0)
 			num = 1;
-		tsm_screen_erase_chars(vte->con, num);
-        #warning "ECH";
+        event_dispatch(vte, TSM_EV_ERASE_CHARS_IN_LINE, 0, 0, num,NULL);
 		break;
 	case 'm':
 		csi_attribute(vte);
@@ -1739,7 +1743,7 @@ static void do_csi(struct tsm_vte *vte, uint32_t data)
 		if (lower < 0)
 			lower = 0;
 		tsm_screen_set_margins(vte->con, upper, lower);
-        #warning "DECSTBM";
+        event_untrapped("r");
 		break;
 	case 'c': /* DA */
 		/* device attributes */
@@ -1751,7 +1755,7 @@ static void do_csi(struct tsm_vte *vte, uint32_t data)
 		if (num <= 0)
 			num = 1;
 		tsm_screen_insert_lines(vte->con, num);
-        #warning "IL";
+        event_dispatch(vte, TSM_EV_INSERT_LINES, 0, 0, num,NULL);
 		break;
 	case 'M': /* DL */
 		/* delete lines */
@@ -1759,7 +1763,7 @@ static void do_csi(struct tsm_vte *vte, uint32_t data)
 		if (num <= 0)
 			num = 1;
 		tsm_screen_delete_lines(vte->con, num);
-        #warning "DL";
+        event_dispatch(vte, TSM_EV_DELETE_LINES, 0, 0, num,NULL);
 		break;
 	case 'g': /* TBC */
 		/* tabulation clear */
@@ -1778,7 +1782,7 @@ static void do_csi(struct tsm_vte *vte, uint32_t data)
 		if (num <= 0)
 			num = 1;
 		tsm_screen_insert_chars(vte->con, num);
-        #warning "ICH";
+        event_dispatch(vte, TSM_EV_INSERT_CHARS, 0, 0, num,NULL);
 		break;
 	case 'P': /* DCH */
 		/* delete characters */
@@ -1786,7 +1790,7 @@ static void do_csi(struct tsm_vte *vte, uint32_t data)
 		if (num <= 0)
 			num = 1;
 		tsm_screen_delete_chars(vte->con, num);
-        #warning "DCH";
+        event_dispatch(vte, TSM_EV_DELETE_CHARS, 0, 0, num,NULL);
 		break;
 	case 'Z': /* CBT */
 		/* cursor horizontal backwards tab */
