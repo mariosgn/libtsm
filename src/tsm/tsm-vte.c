@@ -372,7 +372,7 @@ int tsm_vte_new(struct tsm_vte **out, struct tsm_screen *con,
 	struct tsm_vte *vte;
 	int ret;
 
-    if (!out || !con /*|| !write_cb*/) //write_cb is not used or needed except for debug
+    if (!out || !con || !write_cb)
 		return -EINVAL;
 
 	vte = malloc(sizeof(*vte));
@@ -734,7 +734,11 @@ static void do_execute(struct tsm_vte *vte, uint32_t ctrl)
 		else
         {
 			tsm_screen_move_down(vte->con, 1, true);
-            event_dispatch(vte, TSM_EV_MOVE_OF, 0, 1, 0,NULL);
+            /*
+             * TODO: I do not understand this
+             * event_dispatch(vte, TSM_EV_MOVE_OF, 0, 1, 0,NULL);
+             */
+            event_dispatch(vte, TSM_EV_LINEFEED, 0, 0, 0,NULL);
         }
 
 		break;
@@ -791,7 +795,7 @@ static void do_execute(struct tsm_vte *vte, uint32_t ctrl)
 	case 0x8d: /* RI */
 		/* Move up one row, perform scroll-down if needed */
 		tsm_screen_move_up(vte->con, 1, true);
-        event_dispatch(vte, TSM_EV_MOVE_OF, 0, -1, 0,NULL);
+        event_dispatch(vte, TSM_EV_MOVE_OF, 0, -1, -1,NULL);
 		break;
 	case 0x8e: /* SS2 */
 		/* Temporarily map G2 into GL for next char only */
@@ -1009,7 +1013,7 @@ static void do_esc(struct tsm_vte *vte, uint32_t data)
 	case 'D': /* IND */
 		/* Move down one row, perform scroll-up if needed */
 		tsm_screen_move_down(vte->con, 1, true);
-        event_dispatch(vte, TSM_EV_MOVE_OF, 0, 1, 0,NULL);
+        event_dispatch(vte, TSM_EV_MOVE_OF, 0, 1, 1,NULL);
 		break;
 	case 'E': /* NEL */
 		/* CR/NL with scroll-up if needed */
@@ -1024,7 +1028,7 @@ static void do_esc(struct tsm_vte *vte, uint32_t data)
 	case 'M': /* RI */
 		/* Move up one row, perform scroll-down if needed */
 		tsm_screen_move_up(vte->con, 1, true);
-        event_dispatch(vte, TSM_EV_MOVE_OF, 0, -1, 0,NULL);
+        event_dispatch(vte, TSM_EV_MOVE_OF, 0, -1, -1,NULL);
 		break;
 	case 'N': /* SS2 */
 		/* Temporarily map G2 into GL for next char only */
@@ -1596,7 +1600,7 @@ static void do_csi(struct tsm_vte *vte, uint32_t data)
 		if (num <= 0)
 			num = 1;
 		tsm_screen_move_up(vte->con, num, false);
-        event_dispatch(vte, TSM_EV_MOVE_OF, 0, -1, num, NULL);
+        event_dispatch(vte, TSM_EV_MOVE_OF, 0, num*-1, num*-1, NULL);
 		break;
 	case 'B': /* CUD */
 		/* move cursor down */
@@ -1604,7 +1608,7 @@ static void do_csi(struct tsm_vte *vte, uint32_t data)
 		if (num <= 0)
 			num = 1;
 		tsm_screen_move_down(vte->con, num, false);
-        event_dispatch(vte, TSM_EV_MOVE_OF, 0, 1, num, NULL);
+        event_dispatch(vte, TSM_EV_MOVE_OF, 0, num, num, NULL);
 		break;
 	case 'C': /* CUF */
 		/* move cursor forward */
@@ -1612,7 +1616,7 @@ static void do_csi(struct tsm_vte *vte, uint32_t data)
 		if (num <= 0)
 			num = 1;
 		tsm_screen_move_right(vte->con, num);
-        event_dispatch(vte, TSM_EV_MOVE_OF, 1, 0, num, NULL);
+        event_dispatch(vte, TSM_EV_MOVE_OF, num, 0, num, NULL);
 		break;
 	case 'D': /* CUB */
 		/* move cursor backward */
@@ -1620,7 +1624,7 @@ static void do_csi(struct tsm_vte *vte, uint32_t data)
 		if (num <= 0)
 			num = 1;
 		tsm_screen_move_left(vte->con, num);
-        event_dispatch(vte, TSM_EV_MOVE_OF, -1, 0, num, NULL);
+        event_dispatch(vte, TSM_EV_MOVE_OF, num*-1, 0, num*-1, NULL);
 		break;
 	case 'd': /* VPA */
 		/* Vertical Line Position Absolute */
